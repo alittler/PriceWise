@@ -1,0 +1,7 @@
+{
+  "name": "PriceWise Grocery Compare",
+  "description": "Snap photos of grocery price tags to automatically calculate and compare the best price per unit across different sizes and brands.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
