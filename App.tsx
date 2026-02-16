@@ -37,14 +37,14 @@ const App: React.FC = () => {
         setItems(prev => prev.map(it => it.id === id ? { 
           ...it, 
           status: 'error',
-          errorReason: 'Could not find price or unit in this image.'
+          errorReason: 'The AI could not identify a clear price or unit on this tag.'
         } : it));
       }
     } catch (err) {
       setItems(prev => prev.map(it => it.id === id ? { 
         ...it, 
         status: 'error',
-        errorReason: 'Network error or unreadable tag.'
+        errorReason: 'Network error or unreadable image data.'
       } : it));
     }
   };
@@ -85,7 +85,8 @@ const App: React.FC = () => {
   const getItemRate = useCallback((item: GroceryItem, currentScale: GlobalComparisonUnit) => {
     if (item.status !== 'complete' || !item.normalizedRates) return Infinity;
     const key = currentScale === 'large' ? (item.category === 'weight' ? '1KG' : '1L') : (item.category === 'weight' ? '100G' : '100ML');
-    return item.normalizedRates[key] || item.normalizedRates['UNIT'] || Infinity;
+    const rate = item.normalizedRates[key] || item.normalizedRates['UNIT'];
+    return typeof rate === 'number' ? rate : Infinity;
   }, []);
 
   // Sort items: Cheapest first, analyzing/error items at the end
@@ -103,7 +104,8 @@ const App: React.FC = () => {
       const rateA = getItemRate(a, scale);
       const rateB = getItemRate(b, scale);
       
-      return rateA - rateB;
+      if (rateA === rateB) return 0;
+      return rateA > rateB ? 1 : -1;
     });
   }, [items, scale, getItemRate]);
 
@@ -176,8 +178,8 @@ const App: React.FC = () => {
 
         {items.length === 0 && !isProcessing && (
           <div className="px-8 mt-12 text-center">
-            <h2 className="text-2xl font-black mb-2 opacity-30">SCAN TO BEGIN</h2>
-            <p className="text-zinc-600 text-sm font-medium">Tap the camera card below to start comparing prices.</p>
+            <h2 className="text-2xl font-black mb-2 opacity-30 uppercase tracking-tighter">Scan to Begin</h2>
+            <p className="text-zinc-600 text-sm font-medium">Capture a few price tags to find the best value.</p>
           </div>
         )}
 

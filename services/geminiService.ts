@@ -40,7 +40,15 @@ export const analyzeGroceryImage = async (base64Image: string): Promise<Analysis
 
     const text = response.text;
     if (!text) return null;
-    return JSON.parse(text) as AnalysisResponse;
+    
+    try {
+      // Clean possible markdown artifacts if the model ignores the responseMimeType instruction
+      const cleanJson = text.replace(/```json\n?|```/g, '').trim();
+      return JSON.parse(cleanJson) as AnalysisResponse;
+    } catch (parseError) {
+      console.error("Failed to parse JSON response:", text);
+      return null;
+    }
   } catch (error) {
     console.error("Error analyzing image:", error);
     return null;
