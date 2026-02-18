@@ -3,11 +3,12 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResponse } from "../types";
 
 export const analyzeGroceryImage = async (base64Image: string): Promise<AnalysisResponse | null> => {
+  // Initialize right before call to ensure we have the latest process.env.API_KEY from the selection dialog
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3-pro-preview', // Upgraded to Pro for better vision precision
       contents: {
         parts: [
           {
@@ -17,7 +18,7 @@ export const analyzeGroceryImage = async (base64Image: string): Promise<Analysis
             },
           },
           {
-            text: "Analyze this grocery item or price tag. Extract the product name, brand, total price, quantity, and unit. Be accurate with weights and currency. Categorize it as 'weight', 'volume', or 'count'."
+            text: "Analyze this grocery item or price tag. Extract the product name, brand (if visible), total price, quantity, and unit. Be accurate with weights and currency. Categorize it as 'weight', 'volume', or 'count'."
           }
         ],
       },
@@ -42,7 +43,6 @@ export const analyzeGroceryImage = async (base64Image: string): Promise<Analysis
     if (!text) return null;
     
     try {
-      // Clean possible markdown artifacts if the model ignores the responseMimeType instruction
       const cleanJson = text.replace(/```json\n?|```/g, '').trim();
       return JSON.parse(cleanJson) as AnalysisResponse;
     } catch (parseError) {
@@ -50,7 +50,7 @@ export const analyzeGroceryImage = async (base64Image: string): Promise<Analysis
       return null;
     }
   } catch (error) {
-    console.error("Error analyzing image:", error);
-    return null;
+    console.error("Gemini API Error:", error);
+    throw error; // Throw so the UI can handle auth/key errors specifically
   }
 };
